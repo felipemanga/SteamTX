@@ -1,0 +1,1 @@
+-lSDL2 -lSDL2_ttf -lSDL2_image -Os -fprebuilt-module-path=./build/src -o LiveDrive
