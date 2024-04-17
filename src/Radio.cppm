@@ -6,22 +6,37 @@ import <iostream>;
 import <memory>;
 
 import SerialPort;
+import Registry;
 
 export module Radio;
 
 export class Radio {
     std::unique_ptr<SerialPort> serial;
 
+    std::string defaultPort = registry::lookup<std::string>("ports.serial", "");
+
     void connect() {
 	serial.reset();
-	for (auto& ref : SerialPort::poll()) {
+	auto ports = SerialPort::poll();
+	if (ports.empty())
+	    return;
+	if (!defaultPort.empty()) {
+	    auto pos = std::ranges::find_if(ports, [&](auto& port){return port->name() == defaultPort;});
+	    if (pos != ports.end()) {
+		portIndex = std::distance(ports.begin(), pos);
+	    } else {
+		std::cout << "Could not find port " << defaultPort << std::endl;
+	    }
+	}
+	std::ranges::rotate(ports, ports.begin() + (portIndex % ports.size()));
+	for (auto& ref : ports) {
 	    serial = ref->create();
 	    if (serial->good()) {
 		serial->apply();
 		if (serial->good()) {
 		    std::string out = "func 0 1";
 		    serial->write(out + "\n");
-		    std::cout << "Connected. enabling func 0. [" << out << "]" << std::endl;
+		    std::cout << "Connected to " << ref->name() << ". Enabling func 0. [" << out << "]" << std::endl;
 		    break;
 		}
 	    }
@@ -31,6 +46,8 @@ export class Radio {
     }
 
 public:
+    std::size_t portIndex{};
+    bool ch3{};
     int steerTrim = 0;
     int steerMax = 512;
     int steerMin = -512;
@@ -38,6 +55,12 @@ public:
     float turn{};
     float brk{};
     float gas{};
+
+    void nextPort() {
+	defaultPort.clear();
+        portIndex++;
+	connect();
+    }
 
     void setSteerLimit() {
 	if (turn * 512 < -50)
@@ -71,6 +94,7 @@ public:
 	    std::to_string(clampedTurn) +
 	    " " +
 	    std::to_string(throttle) +
+	    (ch3 ? " 512" : " 0") +
 	    "\r\n"
 	    );
     }

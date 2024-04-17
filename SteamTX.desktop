@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=SteamTX
+GenericName=SteamTX
+Comment=Use your Steamdeck as a trainer for an EdgeTX controller
+Icon=steamtx
+Categories=
+Exec=./bin/steamtx
+TryExec=./bin/steamtx
+Terminal=true
+StartupNotify=false
+StartupWMClass=SteamTX

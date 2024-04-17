@@ -37,4 +37,8 @@ export namespace msg
     struct OnButtonUp {
 	int button;
     };
+
+    struct RequestLayout {};
+
+    struct RequestQuit {};
 }

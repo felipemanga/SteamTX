@@ -248,10 +248,10 @@ public:
 	    return;
 	}
 
-	// if (gfmt() == -1) {
-	//     error = "Could not get FMT";
-	//     return;
-	// }
+	if (gfmt() == -1) {
+	    error = "Could not get FMT";
+	    return;
+	}
 
 	v4l2_sfps(fd, 30);
 
@@ -275,19 +275,20 @@ public:
     int gfmt() {
 	// set fmt
 	struct v4l2_format fmt;
+	fmt.type = 1; // V4L2_BUF_TYPE_VIDEO_CAPTURE
 	if (ioctl(fd, VIDIOC_G_FMT, &fmt) == -1) {
 	    fprintf(stderr, "Unable to get format\n");
 	    return -1;
 	}
 	_height = fmt.fmt.pix.height;
 	_width = fmt.fmt.pix.width;
-	// printf("\033[33mpix.pixelformat:\t%c%c%c%c\n\033[0m",
-	//        fmt.fmt.pix.pixelformat & 0xFF, (fmt.fmt.pix.pixelformat >> 8) & 0xFF,
-	//        (fmt.fmt.pix.pixelformat >> 16) & 0xFF,
-	//        (fmt.fmt.pix.pixelformat >> 24) & 0xFF);
-	// printf("pix.height:\t\t%d\n", fmt.fmt.pix.height);
-	// printf("pix.width:\t\t%d\n", fmt.fmt.pix.width);
-	// printf("pix.field:\t\t%d\n", fmt.fmt.pix.field);
+	printf("\033[33mpix.pixelformat:\t%c%c%c%c\n\033[0m",
+	       fmt.fmt.pix.pixelformat & 0xFF, (fmt.fmt.pix.pixelformat >> 8) & 0xFF,
+	       (fmt.fmt.pix.pixelformat >> 16) & 0xFF,
+	       (fmt.fmt.pix.pixelformat >> 24) & 0xFF);
+	printf("pix.height:\t\t%d\n", fmt.fmt.pix.height);
+	printf("pix.width:\t\t%d\n", fmt.fmt.pix.width);
+	printf("pix.field:\t\t%d\n", fmt.fmt.pix.field);
 	return 0;
     }
 

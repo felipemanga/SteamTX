@@ -2,6 +2,7 @@ module;
 
 import <algorithm>;
 import <cstddef>;
+import <functional>;
 import <iostream>;
 import <memory>;
 import <vector>;
@@ -118,13 +119,21 @@ export namespace ui {
     class Scene : public Widget {
 	System& sys;
 	EventBus bus;
+	bool layoutRequested = true;
+
     public:
+	std::function<void()> layout;
 
 	Scene(System& sys) : sys{sys} {
-	    bus >> [](const msg::OnResize& onResize) {
+	    bus >> [](const msg::OnResize& onResize) {};
+	    bus >> [&](msg::RequestLayout) {layoutRequested = true;};
+	    bus >> [&](const msg::OnDraw& onDraw) {
+		if (layoutRequested && layout) {
+		    layoutRequested = false;
+		    layout();
+		}
+		draw(sys);
 	    };
-
-	    bus >> [&](const msg::OnDraw& onDraw) {draw(sys);};
 	}
     };
 
@@ -136,11 +145,29 @@ export namespace ui {
 
 	float scale = 1.0f;
 
+	virtual std::size_t width() const {
+	    return image ? image->width() : 0;
+	}
+
+	virtual std::size_t height() const {
+	    return image ? image->height() : 0;
+	}
+
+	float finalWidth() {return width() * scale;}
+	float finalHeight() {return height() * scale;}
+
+	void center(std::size_t width, std::size_t height) {
+	    position = {
+		static_cast<int>(width/2.0f - finalWidth() / 2.0f),
+		static_cast<int>(height/2.0f - finalHeight() / 2.0f),
+	    };
+	}
+
 	void fit(std::size_t width, std::size_t height) {
 	    if (!image)
 		return;
-	    scale = std::min<float>(static_cast<float>(width) / image->width(),
-				    static_cast<float>(height) / image->height());
+	    scale = std::min<float>(static_cast<float>(width) / this->width(),
+				    static_cast<float>(height) / this->height());
 	}
 
 	void fill(std::size_t width, std::size_t height) {
@@ -160,14 +187,15 @@ export namespace ui {
 
 	void draw(System& sys, Coord offset) override {
 	    if (image) {
-		offset += position;
-		image->blit(offset.x, offset.y, image->width() * scale, image->height() * scale);
+		auto global = offset;
+		global += position;
+		image->blit(global.x, global.y, image->width() * scale, image->height() * scale);
 	    }
+	    Widget::draw(sys, offset);
 	}
     };
 
-    class Label : public Widget {
-	mutable std::unique_ptr<System::Image> image;
+    class Label : public Image {
 	std::string text;
 	std::shared_ptr<System::Font> font;
     public:
@@ -188,23 +216,12 @@ export namespace ui {
 	    return *this;
 	}
 
-	void updateBounds(const Coord& position) override {
-	    Widget::updateBounds(position);
-	    if (image) {
-		box.w = image->width();
-		box.h = image->height();
-	    }
-	}
-
 	void draw(System& sys, Coord offset) override {
 	    if (text.empty())
 		return;
 	    if (!image)
 		image = sys.createImage(text.c_str(), font.get(), color);
-	    if (image) {
-		offset += position;
-		image->blit(offset.x, offset.y);
-	    }
+	    Image::draw(sys, offset);
 	}
     };
 

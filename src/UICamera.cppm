@@ -8,18 +8,19 @@ import <memory>;
 import <vector>;
 import <iostream>;
 
-import UI;
-import System;
 import Camera;
+import Event;
+import EventBus;
+import System;
+import UI;
 
 export module UICamera;
 
 export namespace ui {
 
-    class Camera : public Widget {
+    class Camera : public Image {
 	std::vector<uint8_t> data;
 	mutable std::atomic_bool dirty{};
-	mutable std::unique_ptr<System::Image> image;
 	std::unique_ptr<::Camera> camera;
 
 	void connect() {
@@ -30,6 +31,9 @@ export namespace ui {
 	    if (cameras.empty())
 		return;
 
+	    dirty = false;
+	    image.reset();
+
 	    std::ranges::rotate(cameras, cameras.begin() + (cameraIndex % cameras.size()));
 	    for (auto& ref : cameras) {
 		camera = ref->create([&](auto buffer, std::size_t len) {
@@ -38,8 +42,9 @@ export namespace ui {
 		    memcpy(data.data(), buffer, len);
 		    dirty = true;
 		});
-		if (camera->good())
+		if (camera->good()) {
 		    break;
+		}
 		std::cout << camera->getError() << std::endl;
 		camera.reset();
 	    }
@@ -59,20 +64,12 @@ export namespace ui {
 	    return camera ? camera->name() : empty;
 	}
 
-	std::size_t width() {
+	std::size_t width() const override {
 	    return camera ? camera->width() : 0;
 	}
 
-	std::size_t height() {
+	std::size_t height() const override {
 	    return camera ? camera->height() : 0;
-	}
-
-	void updateBounds(const Coord& position) override {
-	    Widget::updateBounds(position);
-	    if (image) {
-		box.w = image->width();
-		box.h = image->height();
-	    }
 	}
 
 	void draw(System& sys, Coord offset) override {
@@ -82,15 +79,13 @@ export namespace ui {
 	    if (dirty) {
 		if (!image) {
 		    image = sys.createImage(camera->width(), camera->height(), System::ImageFormat::YUY2);
+		    EventBus::send<msg::RequestLayout>({});
 		}
 		image->update(data.data());
 		dirty = false;
 	    }
 
-	    if (image) {
-		offset += position;
-	        image->blit(offset.x, offset.y);
-	    }
+	    Image::draw(sys, offset);
 	}
     };
 

@@ -7,6 +7,7 @@ import <typeindex>;
 import <typeinfo>;
 import <unordered_map>;
 import <vector>;
+import <iostream>;
 
 import Convert;
 
@@ -43,10 +44,14 @@ inline std::unordered_map<std::string, registry::Value>& valueRegistry() {
     return reg;
 }
 
+bool verboseRegistry{};
+
 export namespace registry {
 
 template <typename Type = std::string>
 Type lookup(const std::string& key, const Type& def = {}) {
+    if (verboseRegistry)
+	std::cout << "Looking up " << key << std::endl;
     auto& reg = valueRegistry();
     auto it = reg.find(key);
     if (it == reg.end())
@@ -73,7 +78,7 @@ void load(const std::string& path) {
 	char c{};
 	if (!stream.read(&c, 1)) {
 	    if (state == Init)
-		return;
+		break;
 	    c = '\n';
 	}
 	if (c == '\r')
@@ -153,6 +158,8 @@ void load(const std::string& path) {
 	    continue;
 	}
     }
+
+    verboseRegistry = lookup("verbose.registry", false);
 }
 
 }

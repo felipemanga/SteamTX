@@ -33,6 +33,7 @@ public:
     int joyIndex{};
     std::size_t _width{};
     std::size_t _height{};
+    bool quitRequested{};
 
     SDLSystem() {
 	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
@@ -40,6 +41,7 @@ public:
 	initGraphics();
 	TTF_Init();
 	IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
+	bus >> [&](msg::RequestQuit) {quitRequested = true;};
     }
 
     ~SDLSystem() {
@@ -191,7 +193,7 @@ public:
     }
 
     bool loop() override {
-	if (!renderer)
+	if (!renderer || quitRequested)
 	    return false;
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {

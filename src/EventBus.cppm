@@ -100,17 +100,18 @@ public:
 
     template<typename Event>
     EventBus& operator << (Event&& event) {
-	using BaseEvent = std::remove_cvref_t<Event>;
-        auto& connections = getConnections<BaseEvent>();
-	for (auto& connection : connections) {
-	    connection->func(*connection, &event);
-	}
+	send(std::forward<Event>(event));
 	return *this;
     }
+
+    static inline bool verboseEvents{};
 
     template<typename Event>
     static void send(Event&& event) {
 	using BaseEvent = std::remove_cvref_t<Event>;
+	if (verboseEvents) {
+	    std::cout << "Event: " << typeid(event).name() << std::endl;
+	}
         auto& connections = getConnections<BaseEvent>();
 	for (auto& connection : connections) {
 	    connection->func(*connection, &event);

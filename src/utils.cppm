@@ -27,7 +27,9 @@ T rnd(const std::vector<T>& v) {
 
 export std::vector<std::string> ls(const std::filesystem::path& path) {
     std::vector<std::string> ret;
-    for (auto& file : std::filesystem::directory_iterator{path})
-	ret.push_back(file.path());
+    try {
+	for (auto& file : std::filesystem::directory_iterator{path})
+	    ret.push_back(file.path());
+    } catch (const std::exception&) {}
     return ret;
 }

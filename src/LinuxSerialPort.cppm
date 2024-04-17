@@ -195,8 +195,12 @@ public:
 
 	LinuxReference(const std::filesystem::path& path) : path{path} {}
 
-	std::unique_ptr<SerialPort> create() {
+	std::unique_ptr<SerialPort> create() override {
 	    return std::make_unique<LinuxSerialPort>(path);
+	}
+
+	std::string name() override {
+	    return path.string();
 	}
     };
 

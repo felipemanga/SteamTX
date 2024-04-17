@@ -1,1 +1,1 @@
--lSDL2 -lSDL2_ttf -lSDL2_image -Os -fprebuilt-module-path=./build/src -o LiveDrive
+-lSDL2 -lSDL2_ttf -lSDL2_image -Os -fprebuilt-module-path=./build/src -Wl,--rpath=../lib -Wl,--dynamic-linker=../lib/ld-linux-x86-64.so.2 -o SteamTX

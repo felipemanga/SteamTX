@@ -28,6 +28,7 @@ public:
     struct Reference {
 	virtual ~Reference() = default;
 	virtual std::unique_ptr<SerialPort> create() = 0;
+	virtual std::string name() = 0;
     };
 
     class Poller : public Injectable<Poller> {
