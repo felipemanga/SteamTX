@@ -85,6 +85,8 @@ build_module src/V4LCamera.cppm
 build_module src/Radio.cppm
 build_module src/UICamera.cppm
 wait
+build_module src/Main.cppm
+wait
 
 for CPP_FILE in $CPP_FILES; do
     echo "$CXX: $CPP_FILE"
